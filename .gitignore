@@ -1,2 +1,57 @@
-X
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Data files
+*.csv
+*.xlsx
+*.json
+data/
+
+# Selenium
+*.log
+debug_*.html
+geckodriver.log
+chromedriver.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Credentials & Config
+.env
+config.ini
+*_credentials.json
+secrets/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Archives
+old/
+
+# Debug Files
+debug/
+
 
