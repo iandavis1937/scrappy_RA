@@ -1,5 +1,6 @@
 
 
+import os
 import time
 import random
 from typing import List, Dict, Callable
@@ -16,7 +17,7 @@ from bs4 import BeautifulSoup
 
 import polars as pl
 
-from scrappy_RA import gen_utils
+from . import gen_utils
 
 
 def setup_driver():

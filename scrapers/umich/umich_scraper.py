@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import polars as pl
 
-from scrappy_RA import gen_utils
-from scrappy_RA.scraper import Scraper
+from scrappy_RA.utils import gen_utils
+from scrappy_RA.scrapers.scraper import Scraper
 
 # UMICH_DF_SCHEMA = {
 #     'title': pl.Utf8,

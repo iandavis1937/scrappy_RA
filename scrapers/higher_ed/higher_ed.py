@@ -25,7 +25,7 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     # Get remote jobs
     if search_remote_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/search/remote.cfm'
-        OUTPUT_FILE='./scrappy_RA/higher_ed/higher_ed_remote_jobs.csv'
+        OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_remote_jobs.csv'
         
         SEARCH_KW = {
             1: ['R', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics'],
@@ -49,7 +49,7 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     # Get lab & research jobs (mostly in-person)
     if search_lab_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/admin/search.cfm?JobCat=150&CatName=Laboratory%20and%20Research'
-        OUTPUT_FILE='./scrappy_RA/higher_ed/higher_ed_lab_jobs.csv'
+        OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_lab_jobs.csv'
         SEARCH_KW = {
             1: ['remote', 'work from home', 'work-from-home'],
             2: ['R', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics'],

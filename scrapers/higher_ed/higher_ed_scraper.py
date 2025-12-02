@@ -7,14 +7,13 @@ from typing import Callable, List, Dict
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import polars as pl
-from scrappy_RA import gen_utils
-from scrappy_RA.scraper import Scraper
+from scrappy_RA.scrapers.scraper import Scraper
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from scrappy_RA import selenium_utils
+from scrappy_RA.utils import selenium_utils
 
 
 class HigherEdScraper(Scraper):
@@ -221,6 +220,14 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
             all_jobs_df_list.append(jobs_df_i)
 
     all_jobs = pl.concat(all_jobs_df_list)
+    
+    if driver:
+        try:
+            driver.quit()
+            driver = None
+            print("✓ Browser closed")
+        except Exception as e:
+            print(f"Warning: Error closing driver - {e}")
 
     # Concatenate kw_idx values for duplicate job_codes, then keep first of other columns
     all_jobs = all_jobs.group_by('job_code', maintain_order=True).agg([

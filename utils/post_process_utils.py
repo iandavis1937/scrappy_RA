@@ -1,11 +1,11 @@
 
 
-import polars as pl
 import os
 from pathlib import Path
+from typing import List
+import polars as pl
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from typing import List
 
 
 def get_csv_files(folder_path: str) -> List[Path]:

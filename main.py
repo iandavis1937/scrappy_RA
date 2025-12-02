@@ -2,19 +2,19 @@
 
 print("Importing modules...")
 import os
-from . import post_process_utils
-from .umich.umich import run_umich_module
-from .higher_ed.higher_ed import run_higher_ed_module
+from .utils import post_process_utils
+from .scrapers.umich.umich import run_umich_module
+from .scrapers.higher_ed.higher_ed import run_higher_ed_module
 
 
 # --- CONFIGURATION ---
 FOLDER_PATH = './scrappy_RA/data_to_unify'
-CREDENTIALS_FILE = './scrappy_RA/job-scraper-479904-fcff09f61f6f.json' # Rename this to your file
+CREDENTIALS_FILE = './scrappy_RA/creds/job-scraper-479904-fcff09f61f6f.json' # Rename this to your file
 SHEET_TITLE = 'Job Scraper'
 WORKSHEET_NAME = 'Universities (RA, Admin., TA, etc.)'
 
-FETCH_HIGHER_ED_FLAG = True
-FETCH_UMICH_FLAG = True
+FETCH_HIGHER_ED_FLAG = False
+FETCH_UMICH_FLAG = False
 
 
 if __name__ == '__main__':
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # Combine files into a Polars DataFrame
     combined_df = post_process_utils.combine_csvs_to_polars(csv_files)
     combined_df = combined_df.sort(['kw_idx1', 'kw_num'], descending=[False, True], nulls_last=True)
-    combined_df.write_csv("jobs_combined.csv")
+    combined_df.write_csv("./scrappy_RA/data_saved_locally/jobs_combined.csv")
 
     # Export to Google Sheets
     if not combined_df.is_empty():

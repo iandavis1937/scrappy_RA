@@ -2,41 +2,10 @@
 
 import time
 from typing import Callable
-# from urllib.parse import urlencode, urlparse, urlunparse, parse_qs, urljoin
 import requests
 from bs4 import BeautifulSoup
 import polars as pl
 
-'''
-def build_search_url(base_url, search_kw, kw_param_nm):
-    """Build search URL by ADDING a new query to existing ones."""
-    search_string = " OR ".join(search_kw)
-    
-    # 1. Parse base URL
-    parsed = urlparse(base_url)
-    
-    # 2. Parse existing query string into a dictionary
-    existing_params = parse_qs(parsed.query)
-    
-    # 3. Add the new filterKeywords to the existing dictionary
-    # Note: parse_qs returns lists, so we use list for consistency, though urlencode handles it
-    existing_params[kw_param_nm] = [search_string]
-    
-    # 4. Re-encode the combined parameters
-    combined_query_string = urlencode(existing_params, doseq=True)
-    
-    # 5. Reconstruct URL with the COMBINED query
-    url = urlunparse((
-        parsed.scheme,
-        parsed.netloc,
-        parsed.path,
-        parsed.params,
-        combined_query_string, # Use the combined query string
-        parsed.fragment
-    ))
-    
-    return url
-'''
 
 def get_soup_requests(url, headers=None):
     if not headers:    
