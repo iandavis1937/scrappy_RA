@@ -3,8 +3,9 @@
 print("Importing modules...")
 import os
 from .utils import post_process_utils
-from .scrapers.umich.umich import run_umich_module
 from .scrapers.higher_ed.higher_ed import run_higher_ed_module
+from .scrapers.umich.umich import run_umich_module
+from .scrapers.berkeley.berkeley import run_berkeley_module
 
 
 # --- CONFIGURATION ---
@@ -15,6 +16,7 @@ WORKSHEET_NAME = 'Universities (RA, Admin., TA, etc.)'
 
 FETCH_HIGHER_ED_FLAG = False
 FETCH_UMICH_FLAG = False
+FETCH_BERKELEY_FLAG = True
 
 
 if __name__ == '__main__':
@@ -23,6 +25,9 @@ if __name__ == '__main__':
         
     if FETCH_UMICH_FLAG:
         run_umich_module()
+        
+    if FETCH_BERKELEY_FLAG:
+        run_berkeley_module()
         
     # Check if the input folder exists and find files
     if not os.path.exists(FOLDER_PATH):

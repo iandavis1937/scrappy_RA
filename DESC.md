@@ -1,3 +1,8 @@
+# Forthcoming:
+- UC Berkeley
+- UNC Chapel Hill
+- UCLA
+
 # For a given scraper, call main scraping function:
 - Set up Selenium driver (if using)
 - Append search keywords to URL

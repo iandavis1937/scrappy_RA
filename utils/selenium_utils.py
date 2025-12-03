@@ -42,7 +42,7 @@ def setup_driver():
     return driver
 
 
-def get_soup_selenium(driver, url, wait_selectors=None, wait_time=30, sleep_time=[1.5, 3], save_debug_html=False):
+def get_soup_selenium(driver, url, wait_selectors=None, wait_time=30, sleep_time=[1.5, 3], save_debug_html=True):
     """
     Load a URL in Selenium, wait for an element, return BeautifulSoup.
     """
@@ -81,7 +81,7 @@ def scrape_selenium(
     parser: Callable[[BeautifulSoup, str], list[dict]],
     wait_selectors: str=".record, .row.record, div[class*='record']",
     out_cols: list=['title', 'organization', 'location', 'url', 'salary', 'category', 'posted_date', 'priority', 'job_code'],
-    save_debug_html: bool=False
+    save_debug_html: bool=True
     ):
     """
     Scrape job listings using Selenium
@@ -110,11 +110,11 @@ def scrape_selenium(
                     wait_selectors=wait_selectors,
                     wait_time=30,
                     sleep_time=[1.5, 3],
-                    save_debug_html=False
+                    save_debug_html=True
                 )
                 
                 # Save HTML for debugging
-                if save_debug_html and page == 1:
+                if save_debug_html:
                     with open('page_debug.html', 'w', encoding='utf-8') as f:
                         f.write(soup.prettify())
                     print("Saved first page HTML to page_debug.html")
