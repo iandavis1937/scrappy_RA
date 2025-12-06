@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 from typing import List
+from datetime import datetime, timedelta
 import polars as pl
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -70,10 +71,10 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
         for i, path in enumerate(file_paths):
             
             # Read with schema_overrides as dict
-            colnms = set(EXPECTED_COLUMNS)
+            col_nms = set(EXPECTED_COLUMNS)
             df = pl.read_csv(
                 path,
-                schema_overrides={nm: pl.Utf8 for nm in colnms}
+                schema_overrides={nm: pl.Utf8 for nm in col_nms}
             )
             
             if df is None or df.is_empty():
@@ -103,6 +104,19 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
 
         df = pl.concat(df_list)
         print(f"✓ Successfully combined {len(df_list)} files into one DataFrame.")
+        
+        # Filter out dates earlier than 3 months ago
+        # Cast posted_date to Date type and filter out dates earlier than 3 months ago
+        three_months_ago = datetime.now() - timedelta(days=90)
+
+        df = df.with_columns(
+            pl.col("posted_date").str.to_date("%m/%d/%Y").alias("posted_date")
+        ).filter(
+            pl.col("posted_date") >= three_months_ago.date()
+        ).with_columns(
+            pl.col("posted_date").dt.strftime("%m/%d/%Y").alias("posted_date")
+        )
+        print(f"✓ Filtered to dates from {three_months_ago.date()} onward. Rows remaining: {len(df)}")
         
         # Add matched keywords count column
         df = df.with_columns(

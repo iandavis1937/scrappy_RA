@@ -53,9 +53,9 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
         SEARCH_KW = {
             1: ['remote', 'work from home', 'work-from-home'],
             2: ['" R language"', '" R programming"', '" R statistic"', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics', '"statistical software"', '"statistical program"'],
-            3: ['"data science"', '"data scientist"', '"survey research"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
-            4: ['analysis', 'data'],
-            5: ['tutor', 'assistant']
+            4: ['"data science"', '"data scientist"', '"survey"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
+            6: ['analysis', 'data'],
+            8: ['tutor', 'assistant']
         }
         FETCH_JOB_DESC_FLAG = False
         

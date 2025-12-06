@@ -27,9 +27,10 @@ def run_berkeley_module(search_jobs_page=True):
         BASE_URL = 'https://careerspub.universityofcalifornia.edu/psc/ucb/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/berkeley/berkeley_lab_jobs.csv'
         SEARCH_KW = [
-                'RStudio', 'tidyverse', ' R ',
+                'RStudio', 'tidyverse', ' R language', ' R programming', ' R statistic',
                 'Stata', 'STATA', 'regression', 'econometric', 'Qualtrics',
-                'remote', 'work from home', 'work-from-home',
+                # 'remote',  seems to be related to bug, may just be its order in the sequence 
+                'work from home', 'work-from-home',
                 'survey research', 'data science', 'data scientist', 'quantitative', 'economic',
                 'Python', 'statistic', 'SQL',
                 'analysis', 'data',
