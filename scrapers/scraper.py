@@ -119,11 +119,14 @@ class Scraper:
 
     def to_dataframe(self) -> pl.DataFrame:
         """Convert collected jobs to Polars DataFrame."""
-        print(f"\nConverting {len(self.jobs_from_search)} jobs to Polars DataFrame...")
+        print(f"Returning {len(self.jobs_from_search)} results")
+        
         if not self.jobs_from_search:
+            print("Returning empty data frame")
             df = pl.DataFrame(schema=self.out_df_schema)
         
         else:
+            print(f"\nConverting jobs to Polars DataFrame...")
             df = pl.DataFrame(self.jobs_from_search)
             # Reorder columns for consistency -- Only select columns that exist in the dataframe
             existing_cols = [col for col in self.out_cols if col in df.columns]

@@ -20,9 +20,15 @@ class UCBerkeleyScraper(Scraper):
     # Set UCBerkeley-specific defaults
     def __init__(
         self,
-        driver = None, 
-        wait_selectors: str = ".record, .row.record, div[class*='record']",
+        driver = None,
+        wait_selectors: str="span.ps_box-value[id^='HRS_APP_JBSCH_I_HRS_JOB_OPENING_ID']", #"li.ps_grid-row[id^='HRS_AGNT_RSLT_I']",
         wait_time: int=10,
+        enable_scroll: bool=True,
+        scroll_container_id: str="win0divHRS_AGNT_RSLT_I$grid$0",
+        enable_search_box=True,
+        search_box_id: str='HRS_SCH_WRK_HRS_SCH_TEXT100',
+        search_button_id: str='HRS_SCH_WRK_FLU_HRS_SEARCH_BTN',
+        no_results_id: str='win0divHRS_SCH_WRK_HRS_CC_NO_RSLT',
         save_debug_html = True,
         **kwargs
     ):
@@ -30,10 +36,17 @@ class UCBerkeleyScraper(Scraper):
         self.driver = driver
         self.wait_selectors = wait_selectors
         self.wait_time = wait_time
+        self.enable_scroll = enable_scroll
+        self.scroll_container_id = scroll_container_id
+        self.enable_search_box = enable_search_box
+        self.search_box_id = search_box_id
+        self.search_button_id = search_button_id
+        self.no_results_id = no_results_id
         self.save_debug_html = save_debug_html
                 
         # Call parent with only its recognized parameters
         super().__init__(
+            base_url="https://careerspub.universityofcalifornia.edu/psc/ucb/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U", 
             kw_param_nm="",
             out_cols=['title', 'department', 'location', 'url', 'posted_date', 'job_id'],
             **kwargs
@@ -71,12 +84,19 @@ class UCBerkeleyScraper(Scraper):
         # self._ensure_driver()
         
         soup = selenium_utils.get_soup_selenium(
-            self.driver,
-            url,
-            self.wait_selectors,
-            self.wait_time,
-            self.sleep_time,
-            self.save_debug_html
+            driver=self.driver,
+            url=url,
+            wait_selectors=self.wait_selectors,
+            wait_time=self.wait_time,
+            sleep_time=self.sleep_time,
+            enable_scroll=self.enable_scroll,
+            scroll_container_id=self.scroll_container_id,
+            enable_search_box=self.enable_search_box,
+            search_box_id=self.search_box_id,
+            search_button_id=self.search_button_id,
+            search_kw=self.search_kw[0],
+            no_results_id=self.no_results_id,
+            save_debug_html=self.save_debug_html
             )
         return soup
         
@@ -165,27 +185,25 @@ class UCBerkeleyScraper(Scraper):
         return jobs_on_page
         
         
-def search_berkeley_category(base_url, search_kw, output_file, exclusion_role_kw):
+def search_berkeley(search_kw, output_file, exclusion_role_kw):
     all_jobs_df_list = []
     driver = selenium_utils.setup_driver()
-
-    # Loop through the dictionary items (kw_idx, keywords)
-    for kw_idx, keywords in search_kw.items():
-        print(f"Search #{kw_idx}...")
-        
-        berkeley_scraper = UCBerkeleyScraper(base_url=base_url, search_kw=keywords, driver=driver)
+            
+    # Loop through the list of keywords (index corresponding to relevance)
+    i = 1
+    for kw in search_kw:
+        print(f"\nSearch #{i}, kw: {kw}...")
+        berkeley_scraper = UCBerkeleyScraper(search_kw=[kw], driver=driver)
         jobs_df_i = berkeley_scraper.scrape()
-        
-        # with UCBerkeleyScraper(base_url=base_url, search_kw=keywords, driver=driver) as berkeley_scraper:
-        #     jobs_df_i = berkeley_scraper.scrape()
         
         if jobs_df_i is not None and not jobs_df_i.is_empty():
             jobs_df_i = jobs_df_i.with_columns(
-                pl.lit(str(kw_idx)).alias('kw_idx'),
-                pl.lit(keywords).alias('kw')
+                pl.lit(kw).alias('kw'),
+                pl.lit(str(i)).alias('kw_idx')
             )
             
             all_jobs_df_list.append(jobs_df_i)
+            i += 1
 
     all_jobs = pl.concat(all_jobs_df_list)
     
@@ -200,12 +218,12 @@ def search_berkeley_category(base_url, search_kw, output_file, exclusion_role_kw
     # Concatenate kw_idx values for duplicate job_ids, then keep first of other columns
     all_jobs = all_jobs.group_by('job_id', maintain_order=True).agg([
         pl.col('kw_idx').str.concat(delimiter=', ').alias('kw_idx'),
-        pl.col('kw').flatten().str.concat(delimiter=' | ').alias('kw'),
+        pl.col('kw').flatten().str.concat(delimiter=' + ').alias('kw'),
         pl.all().exclude(['kw_idx', 'kw']).first()
     ])
     
     print(f"\n{'='*50}")
-    print(f"Total jobs scraped: {len(all_jobs)}")
+    print(f"Total jobs scraped (w/o dups): {len(all_jobs)}")
     print(f"{'='*50}")
     
     # Exclude rows where title contains any negative keyword

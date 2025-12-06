@@ -51,14 +51,13 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
             'title': pl.Utf8, 'job_id': pl.Utf8, 'location': pl.Utf8
         })
 
-    # Read all CSV files lazily for performance
+    # Read all CSV files
     try:
         print("Reading CSVs...")
         file_paths = [str(f) for f in csv_files]
         print(file_paths)
-        df_list = [pl.read_csv(f) for f in file_paths]
         
-        # 2. Standardize data frame schema (Add missing columns as Null)
+        # Standardize data frame schema (Add missing columns as Null)
         EXPECTED_COLUMNS = [
             'title', 'organization', 'department', 'location', 'remote',
             'posted_date',
@@ -67,8 +66,16 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
             'employment_type', 'job_id', 'remote_or_lab'
             ]
         
-        std_df_list = []
-        for i, df in enumerate(df_list):
+        df_list = []
+        for i, path in enumerate(file_paths):
+            
+            # Read with schema_overrides as dict
+            colnms = set(EXPECTED_COLUMNS)
+            df = pl.read_csv(
+                path,
+                schema_overrides={nm: pl.Utf8 for nm in colnms}
+            )
+            
             if df is None or df.is_empty():
                 print("Skipping empty or None DataFrame.")
                 continue
@@ -92,9 +99,9 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
             
             # Add filename column
             std_df = std_df.with_columns(pl.lit(file_paths[i]).alias('scraper'))
-            std_df_list.append(std_df)
+            df_list.append(std_df)
 
-        df = pl.concat(std_df_list)
+        df = pl.concat(df_list)
         print(f"✓ Successfully combined {len(df_list)} files into one DataFrame.")
         
         # Add matched keywords count column

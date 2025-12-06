@@ -10,16 +10,16 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     EXLCUSION_ROLE_KW=[
         'president', 'director', 'senior', 'principal', 'professor', 'faculty', 'postdoc',
         # Health/Medicine
-        'medicine',
-        'anesthesiolog', 'cancer', 'cardiolog', 'dermatolog','endocrinolog',
+        'medicine', 'medical', 'surgical',
+        'anesthesi', 'cancer', 'cardiolog', 'dermatolog','endocrinolog',
         'gastroenterolog', 'geriatric', 'gynecolog', 'hematolog',
-        'nephrolog', 'neurolog', 'nursing',
+        'nephrolog', 'neurolog', 'nursing', 'nurse',
         'obstetric', 'oncolog', 'ophthalmolog', 'orthopedic', 'otolaryngolog',
-        'patholog', 'pediatric', 'physiolog', #'rehabilitat',
+        'patholog', 'pediatric', 'pharmac', 'physiolog', #'rehabilitat',
         'psychiatr', 'pulmonolog', 'radiolog', 'rheumatolog', 'surgery', 'urolog',
         # More Natural Sciences
-        'animal', 'biolog', 'biochem',
-        'chemist', 'physics', 'atronom'
+        'animal', 'biolog', 'biochem', 'ecolog',
+        'chemist', 'physics', 'astronom'
         ]
 
     # Get remote jobs
@@ -28,8 +28,8 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_remote_jobs.csv'
         
         SEARCH_KW = {
-            1: ['R', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics'],
-            2: ['data science', 'data scientist', 'survey research', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
+            1: ['" R language"', '" R programming"', '" R statistic"', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics', '"statistical software"', '"statistical program"'],
+            2: ['"data science"', '"data scientist"', '"survey research"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
             3: ['analysis', 'data'],
             4: ['tutor', 'assistant']
         }
@@ -52,8 +52,8 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_lab_jobs.csv'
         SEARCH_KW = {
             1: ['remote', 'work from home', 'work-from-home'],
-            2: ['R', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics'],
-            3: ['data science', 'data scientist', 'survey research', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
+            2: ['" R language"', '" R programming"', '" R statistic"', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics', '"statistical software"', '"statistical program"'],
+            3: ['"data science"', '"data scientist"', '"survey research"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
             4: ['analysis', 'data'],
             5: ['tutor', 'assistant']
         }

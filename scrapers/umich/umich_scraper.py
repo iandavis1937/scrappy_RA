@@ -142,7 +142,7 @@ class UMichScraper(Scraper):
 def search_umich(search_kw, exclusion_role_kw, output_file):
     all_jobs_df_list = []
 
-    # Loop through the dictionary items (relevance_score, keyword_list)
+    # Loop through the list of keywords (index corresponding to relevance)
     i = 1
     for kw in search_kw:
         print(f"Search #{i}, kw: {kw}...")

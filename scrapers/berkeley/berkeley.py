@@ -22,22 +22,23 @@ def run_berkeley_module(search_jobs_page=True):
         'chemist', 'physics', 'atronom'
         ]
 
-    # Get lab & research jobs (mostly in-person)
+    # Get listings (mostly in-person)
     if search_jobs_page:
         BASE_URL = 'https://careerspub.universityofcalifornia.edu/psc/ucb/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/berkeley/berkeley_lab_jobs.csv'
-        SEARCH_KW = {
-            1: []
-            # 1: ['remote', 'work from home', 'work-from-home'],
-            # 2: ['R', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics'],
-            # 3: ['data science', 'data scientist', 'survey research', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
-            # 4: ['analysis', 'data'],
-            # 5: ['tutor', 'assistant']
-        }
+        SEARCH_KW = [
+                'RStudio', 'tidyverse', ' R ',
+                'Stata', 'STATA', 'regression', 'econometric', 'Qualtrics',
+                'remote', 'work from home', 'work-from-home',
+                'survey research', 'data science', 'data scientist', 'quantitative', 'economic',
+                'Python', 'statistic', 'SQL',
+                'analysis', 'data',
+                'tutor', 'assistant'
+            ]
         FETCH_JOB_DESC_FLAG = False
         
-        jobs = berkeley_scraper.search_berkeley_category(
-            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXLCUSION_ROLE_KW
+        jobs = berkeley_scraper.search_berkeley(
+            SEARCH_KW, OUTPUT_FILE, EXLCUSION_ROLE_KW
             )
      
     jobs.write_csv('./scrappy_RA/data_to_unify/berkeley_jobs.csv')

@@ -34,7 +34,7 @@ class HigherEdScraper(Scraper):
                 
         # Call parent with only its recognized parameters
         super().__init__(
-            kw_param_nm="keywordFilter",
+            kw_param_nm="filterKeywords",
             out_cols=['title', 'organization', 'location', 'url', 'salary', 'category', 'posted_date', 'priority', 'job_code'],
             **kwargs
         )
@@ -69,6 +69,8 @@ class HigherEdScraper(Scraper):
     def get_soup(self, url: str) -> BeautifulSoup:
         """Fetch page using selenium-based soup fetcher."""
         # self._ensure_driver()
+        
+        print(url)
         
         soup = selenium_utils.get_soup_selenium(
             self.driver,
@@ -203,7 +205,7 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
 
     # Loop through the dictionary items (kw_idx, keywords)
     for kw_idx, keywords in search_kw.items():
-        print(f"Search #{kw_idx}...")
+        print(f"Search #{kw_idx} - {keywords}...")
         
         higher_ed_scraper = HigherEdScraper(base_url=base_url, search_kw=keywords, driver=driver)
         jobs_df_i = higher_ed_scraper.scrape()
@@ -214,7 +216,7 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
         if jobs_df_i is not None and not jobs_df_i.is_empty():
             jobs_df_i = jobs_df_i.with_columns(
                 pl.lit(str(kw_idx)).alias('kw_idx'),
-                pl.lit(keywords).alias('kw')
+                pl.lit(f"[{' | '.join(keywords)}]").alias('kw')
             )
             
             all_jobs_df_list.append(jobs_df_i)
@@ -228,11 +230,13 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
             print("✓ Browser closed")
         except Exception as e:
             print(f"Warning: Error closing driver - {e}")
+            
+    all_jobs.write_csv("test.csv")
 
     # Concatenate kw_idx values for duplicate job_codes, then keep first of other columns
     all_jobs = all_jobs.group_by('job_code', maintain_order=True).agg([
         pl.col('kw_idx').str.concat(delimiter=', ').alias('kw_idx'),
-        pl.col('kw').flatten().str.concat(delimiter=' | ').alias('kw'),
+        pl.col('kw').str.concat(delimiter=', ').alias('kw'),
         pl.all().exclude(['kw_idx', 'kw']).first()
     ])
     

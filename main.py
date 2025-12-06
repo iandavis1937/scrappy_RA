@@ -14,14 +14,14 @@ CREDENTIALS_FILE = './scrappy_RA/creds/job-scraper-479904-fcff09f61f6f.json' # R
 SHEET_TITLE = 'Job Scraper'
 WORKSHEET_NAME = 'Universities (RA, Admin., TA, etc.)'
 
-FETCH_HIGHER_ED_FLAG = False
-FETCH_UMICH_FLAG = False
+FETCH_HIGHER_ED_FLAG = True
+FETCH_UMICH_FLAG = True
 FETCH_BERKELEY_FLAG = True
 
 
 if __name__ == '__main__':
     if FETCH_HIGHER_ED_FLAG:
-        run_higher_ed_module()
+        run_higher_ed_module(True, True)
         
     if FETCH_UMICH_FLAG:
         run_umich_module()
