@@ -1,12 +1,18 @@
 
 
 import os
+import pickle
 from pathlib import Path
 from typing import List
 from datetime import datetime, timedelta
 import polars as pl
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 
 def get_csv_files(folder_path: str) -> List[Path]:
@@ -131,9 +137,22 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
         return pl.DataFrame()
 
 
-def export_to_google_sheets(df: pl.DataFrame, sheet_title: str, worksheet_name: str, creds_file: str):
+def export_to_google_sheets(
+    df: pl.DataFrame,
+    sheet_title: str,
+    worksheet_name: str,
+    creds_file: str,
+    column_name: str = None):
     """
     Exports a Polars DataFrame to a specified Google Sheet.
+    
+    Args:
+        df: Polars DataFrame to export
+        sheet_title: Name of the Google Sheet document
+        worksheet_name: Name of the worksheet/tab
+        creds_file: Path to credentials JSON file
+        column_name: Optional. If provided, only updates this column. 
+                    If None, updates the entire sheet.
     """
     if df.is_empty():
         print("No data to export to Google Sheets.")
@@ -172,15 +191,439 @@ def export_to_google_sheets(df: pl.DataFrame, sheet_title: str, worksheet_name: 
         try:
             worksheet = sh.worksheet(worksheet_name)
         except gspread.WorksheetNotFound:
-            worksheet = sh.add_worksheet(title=worksheet_name, rows=len(data_for_sheet) + 1, cols=len(header))
+            worksheet = sh.add_worksheet(title=worksheet_name, rows=df.shape[0] + 1, cols=df.shape[1])
             print(f"Worksheet '{worksheet_name}' created.")
-            
-        # Clear existing data and write new data
-        worksheet.clear()
-        worksheet.update('A1', data_for_sheet)
         
-        print(f"✓ Success! Exported {df.shape[0]} rows and {df.shape[1]} columns to:")
-        print(f"  https://docs.google.com/spreadsheets/d/{sh.id}")
+        # If column_name is specified, only update that column
+        if column_name:
+            if column_name not in df.columns:
+                print(f"✗ Error: Column '{column_name}' not found in DataFrame.")
+                print(f"Available columns: {df.columns}")
+                return
+            
+            # Find the column index in the existing sheet
+            existing_headers = worksheet.row_values(1)
+            
+            if column_name not in existing_headers:
+                print(f"✗ Error: Column '{column_name}' not found in existing sheet headers.")
+                print(f"Existing headers: {existing_headers}")
+                return
+            
+            # Get column index (1-based for gspread)
+            col_index = existing_headers.index(column_name) + 1
+            col_letter = gspread.utils.rowcol_to_a1(1, col_index)[:-1]  # Get just the letter (e.g., 'A', 'B')
+            
+            # Prepare column data (including header)
+            column_data = [[column_name]] + [[val] for val in df[column_name].to_list()]
+            
+            # Update only this column
+            range_notation = f'{col_letter}1:{col_letter}{len(column_data)}'
+            worksheet.update(range_notation, column_data)
+            
+            print(f"✓ Success! Updated column '{column_name}' ({len(column_data)-1} rows) in column {col_letter}")
+            print(f"  https://docs.google.com/spreadsheets/d/{sh.id}")
+            
+        else:
+            # Update entire sheet (original behavior)
+            header = df.columns
+            data = df.rows()
+            data_for_sheet = [header] + data
+            
+            # Clear existing data and write new data
+            worksheet.clear()
+            worksheet.update('A1', data_for_sheet)
+            
+            print(f"✓ Success! Exported {df.shape[0]} rows and {df.shape[1]} columns to:")
+            print(f"  https://docs.google.com/spreadsheets/d/{sh.id}")
         
     except Exception as e:
         print(f"✗ Error updating worksheet: {e}")
+        
+
+def read_from_google_sheets(sheet_title: str, worksheet_name: str, creds_file: str) -> pl.DataFrame:
+    """
+    Reads data from a specified Google Sheet and returns a Polars DataFrame.
+    
+    Args:
+        sheet_title: Name of the Google Sheet document
+        worksheet_name: Name of the specific worksheet/tab
+        creds_file: Path to the service account credentials JSON file
+    
+    Returns:
+        Polars DataFrame with the sheet data
+    """
+    print(f"\nAuthenticating and reading data from Google Sheet '{sheet_title}'...")
+    
+    try:
+        # Authenticate using the downloaded JSON key file
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_file, scope)
+        client = gspread.authorize(creds)
+    except Exception as e:
+        print(f"✗ Authentication Error: Check your CREDENTIALS_FILE path and ensure the API key is valid.")
+        print(f"Details: {e}")
+        return pl.DataFrame()
+
+    try:
+        # Open the target Google Sheet document by title
+        sh = client.open(sheet_title)
+    except gspread.SpreadsheetNotFound:
+        print(f"✗ Error: Google Sheet named '{sheet_title}' not found.")
+        print("Please ensure the sheet exists and the Service Account email has viewer/editor access.")
+        return pl.DataFrame()
+    except Exception as e:
+        print(f"✗ Error opening sheet: {e}")
+        return pl.DataFrame()
+
+    try:
+        # Get the worksheet
+        worksheet = sh.worksheet(worksheet_name)
+        
+        # Get all values from the worksheet
+        data = worksheet.get_all_values()
+        
+        if not data:
+            print(f"✗ Warning: Worksheet '{worksheet_name}' is empty.")
+            return pl.DataFrame()
+        
+        # First row is headers, rest is data
+        headers = data[0]
+        rows = data[1:]
+        
+        # Create Polars DataFrame
+        df = pl.DataFrame(rows, schema=headers, orient="row")
+        
+        print(f"✓ Success! Read {df.shape[0]} rows and {df.shape[1]} columns from worksheet '{worksheet_name}'")
+        print(f"  Columns: {df.columns}")
+        
+        return df
+        
+    except gspread.WorksheetNotFound:
+        print(f"✗ Error: Worksheet '{worksheet_name}' not found in sheet '{sheet_title}'.")
+        return pl.DataFrame()
+    except Exception as e:
+        print(f"✗ Error reading worksheet: {e}")
+        return pl.DataFrame()
+
+
+def write_gdoc_letter_A(
+    text: str,
+    doc_title: str,
+    creds_file: str,
+    folder_id: str="1fXbsMrE_MU4wchsll1X4bi9SuK6q5ikV"
+    ):
+    """
+    Creates a formatted cover letter in Google Docs with proper styling and saves it into a specific folder.
+    
+    Args:
+        text: The cover letter text.
+        doc_title: Title for the document.
+        creds_file: Path to the credentials file.
+        folder_id: Optional ID of the folder where to save the document. If None, will be saved to root.
+    
+    Returns:
+        Document URL.
+    """
+    try:
+        # Define the scopes for Docs and Drive APIs
+        scope = [
+            'https://www.googleapis.com/auth/documents',
+            'https://www.googleapis.com/auth/drive'
+        ]
+        
+        # Load credentials from service account
+        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_file, scope)
+        service = build('docs', 'v1', credentials=creds)
+        drive_service = build('drive', 'v3', credentials=creds)  # Drive service to move the file
+        
+        # Create the Google Docs document
+        print("Generating Google Doc...")
+        doc = service.documents().create(body={'title': doc_title}).execute()
+        doc_id = doc.get('documentId')
+        
+        # Split the input text into paragraphs
+        paragraphs = text.split('\n\n')
+        
+        requests = []
+        current_index = 1
+        
+        # Prepare the requests to insert text and format it
+        for para in paragraphs:
+            if para.strip():
+                requests.append({
+                    'insertText': {
+                        'location': {'index': current_index},
+                        'text': para.strip() + '\n\n'
+                    }
+                })
+                current_index += len(para.strip()) + 2
+        
+        # Optional formatting for the document
+        requests.extend([
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': current_index
+                    },
+                    'paragraphStyle': {
+                        'lineSpacing': 115,
+                        'spaceAbove': {'magnitude': 0, 'unit': 'PT'},
+                        'spaceBelow': {'magnitude': 10, 'unit': 'PT'}
+                    },
+                    'fields': 'lineSpacing,spaceAbove,spaceBelow'
+                }
+            },
+            {
+                'updateTextStyle': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': current_index
+                    },
+                    'textStyle': {
+                        'fontSize': {'magnitude': 11, 'unit': 'PT'},
+                        'weightedFontFamily': {'fontFamily': 'Arial'}
+                    },
+                    'fields': 'fontSize,weightedFontFamily'
+                }
+            }
+        ])
+        
+        # Apply the requests (insert text + formatting)
+        service.documents().batchUpdate(
+            documentId=doc_id,
+            body={'requests': requests}
+        ).execute()
+
+        # If a folder_id is provided, move the document into that folder
+        print("Moving doc to specified folder...")
+        if folder_id:
+            drive_service.files().update(
+                fileId=doc_id,
+                addParents=folder_id,  # Add folder as a parent
+                removeParents='root',  # Remove from the root folder
+                fields='id, parents'
+            ).execute()
+
+        # Construct the URL to the newly created document
+        doc_url = f'https://docs.google.com/document/d/{doc_id}/edit'
+        print(f"✓ Formatted document created and saved: {doc_url}")
+        
+        return doc_url
+        
+    except HttpError as e:
+        print(f"✗ Error creating or saving the document: {e}")
+        return None
+
+
+def get_user_credentials():
+    """Authenticate as the user (not service account)"""
+    scope = [
+        'https://www.googleapis.com/auth/documents',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    
+    OAuth_creds_file = "/mnt/c/wd/scrappy_RA/creds/OAuth_creds.json"
+    
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(OAuth_creds_file, scope)
+            creds = flow.run_local_server(port=0)
+        
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+    
+    return creds
+
+
+def write_gdoc_letter(
+    text: str,
+    doc_title: str,
+    creds_file: str,
+    folder_id: str="1fXbsMrE_MU4wchsll1X4bi9SuK6q5ikV"
+    ):
+    """
+    Creates a formatted cover letter in Google Docs inside the specified folder.
+
+    Args:
+        text: The cover letter text.
+        doc_title: Title for the document.
+        creds_file: Path to the credentials file.
+        folder_id: The ID of the folder to store the document in.
+
+    Returns:
+        Document URL.
+    """
+    try:
+        ## Define the scopes for Docs and Drive APIs
+        # scope = [
+        #     'https://www.googleapis.com/auth/documents',
+        #     'https://www.googleapis.com/auth/drive'
+        # ]
+        
+        ## Load credentials from service account
+        # creds = ServiceAccountCredentials.from_json_keyfile_name(creds_file, scope)
+        
+        creds = get_user_credentials()
+        service = build('drive', 'v3', credentials=creds)  # Using Drive API to create the document
+        
+        # Create the Google Docs document directly in the specified folder
+        print("Setting metadata...")
+        file_metadata = {
+            'name': doc_title,  # Set document title
+            'mimeType': 'application/vnd.google-apps.document',  # Google Docs mime type
+            'parents': [folder_id]  # Specify the folder ID to place the document inside
+        }
+        
+        print("Creating document...")
+        file = service.files().create(
+            body=file_metadata
+        ).execute()
+        
+        doc_id = file['id']
+        
+        # Create the Docs service to insert content and formatting
+        docs_service = build('docs', 'v1', credentials=creds)
+
+        # Define header content
+        header_text = "Ian A. Davis\niandavis1937@gmail.com              ·            	+1 (518) 278-4071                   ·          	Ballston Spa, NY 12020\n\n"
+        # header_text = "Ian A. Davis\niandavis1937@gmail.com  ·  +1 (518) 278-4071  ·  Ballston Spa, NY 12020\n\n"
+        
+        # Insert header first
+        requests = [{
+            'insertText': {
+                'location': {'index': 1},
+                'text': header_text
+            }
+        }]
+        
+        # Calculate where body text starts (after header)
+        current_index = len(header_text) + 1
+        
+        # Insert body paragraphs
+        paragraphs = text.split('\n\n')
+        for para in paragraphs:
+            if para.strip():
+                requests.append({
+                    'insertText': {
+                        'location': {'index': current_index},
+                        'text': para.strip() + '\n\n'
+                    }
+                })
+                current_index += len(para.strip()) + 2
+        
+        # Format the header (name bold and larger, contact info centered)
+        header_name_end = len("Ian A. Davis") + 1
+        header_contact_start = header_name_end + 1
+        header_end = len(header_text)
+        
+        requests.extend([
+            # Make name bold and 14pt
+            {
+                'updateTextStyle': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': header_name_end
+                    },
+                    'textStyle': {
+                        'bold': True,
+                        'fontSize': {'magnitude': 14, 'unit': 'PT'},
+                        'weightedFontFamily': {'fontFamily': 'Cambria'}
+                    },
+                    'fields': 'bold,fontSize,weightedFontFamily'
+                }
+            },
+            # Left-align name
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': header_name_end
+                    },
+                    'paragraphStyle': {
+                        'alignment': 'START'
+                    },
+                    'fields': 'alignment'
+                }
+            },
+            # Format contact info (10pt, centered)
+            {
+                'updateTextStyle': {
+                    'range': {
+                        'startIndex': header_contact_start,
+                        'endIndex': header_end
+                    },
+                    'textStyle': {
+                        'fontSize': {'magnitude': 10, 'unit': 'PT'},
+                        'weightedFontFamily': {'fontFamily': 'Cambria'}
+                    },
+                    'fields': 'bold,fontSize,weightedFontFamily'
+                }
+            },
+            # Center contact info
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': header_contact_start,
+                        'endIndex': header_end
+                    },
+                    'paragraphStyle': {
+                        'alignment': 'CENTER'
+                    },
+                    'fields': 'alignment'
+                }
+            },
+            # Format body text (Times New Roman, 12pt, single-spaced)
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': header_end,
+                        'endIndex': current_index
+                    },
+                    'paragraphStyle': {
+                        'lineSpacing': 100,
+                        'spaceAbove': {'magnitude': 0, 'unit': 'PT'},
+                        'spaceBelow': {'magnitude': 0, 'unit': 'PT'},
+                        'alignment': 'START'  # Left-align body text
+                    },
+                    'fields': 'lineSpacing,spaceAbove,spaceBelow,alignment'
+                }
+            },
+            {
+                'updateTextStyle': {
+                    'range': {
+                        'startIndex': header_end,
+                        'endIndex': current_index
+                    },
+                    'textStyle': {
+                        'fontSize': {'magnitude': 12, 'unit': 'PT'},
+                        'weightedFontFamily': {'fontFamily': 'Times New Roman'}
+                    },
+                    'fields': 'fontSize,weightedFontFamily'
+                }
+            }
+        ])
+                
+        # Apply the requests (insert text + formatting)
+        print("Inserting text...")
+        docs_service.documents().batchUpdate(
+            documentId=doc_id,
+            body={'requests': requests}
+        ).execute()
+
+        # Construct the URL to the newly created document
+        doc_url = f'https://docs.google.com/document/d/{doc_id}/edit'
+        print(f"✓ Formatted document created and saved in folder: {doc_url}")
+        
+        return doc_url
+        
+    except HttpError as e:
+        print(f"✗ Error creating or saving the document: {e}")
+        return None

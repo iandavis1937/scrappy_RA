@@ -460,3 +460,64 @@ def scrape_selenium(
     else:
         print("No jobs found to save.")
         return None
+    
+    
+def fetch_job_desc(url, driver):
+    """
+    Fetch job descriptions for all jobs in the dataframe
+    
+    Args:
+        url: Job description URL
+        driver: Selenium driver
+    
+    Returns:
+        Description text
+    """
+    print(f"\nFetching job description...")
+
+    if url:
+        
+        try:
+            driver.get(url)
+            time.sleep(random.uniform(1.5, 2.5))
+            
+            # Wait for job description to load
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 
+                        ".job-description, .job-details, .description"))
+                )
+            except TimeoutException:
+                print(f"    Timeout loading description")
+            
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            
+            # Try multiple possible selectors for job description
+            description_elem = (
+                soup.find('div', class_='job-description') or
+                soup.find('div', class_='description') or
+                soup.find('div', id='job-description') or
+                soup.find('div', class_='job-details') or
+                soup.find('div', class_='jobdescription') or
+                soup.find('div', {'role': 'article'}) or
+                soup.find('div', id='JobDescription')
+            )
+            
+            if description_elem:
+                description = description_elem.get_text(separator=' ', strip=True)
+            else:
+                description = ''
+                
+        except Exception as e:
+            print(f"    Error fetching description: {e}")
+            description = ''
+        
+        time.sleep(random.uniform(1.5, 2.5))
+    else:
+        print("No URL supplied")
+        description = ''
+    
+    # Add description column to dataframe
+    print(f"✓ Successfully fetched description")
+    
+    return description
