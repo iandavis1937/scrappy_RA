@@ -1,6 +1,13 @@
 
 
+import os
+from pathlib import Path
+import yaml
+import polars as pl
+
 from .umich_scraper import search_umich
+
+BASE_DIR = Path(__file__).resolve().parent     # __file__ is a built-in variable, points to your .py file
 
 
 def run_umich_module():
@@ -15,32 +22,16 @@ def run_umich_module():
     #     'job_id': pl.Utf8
     #     }
 
-    SEARCH_KW = [
-                    'RStudio', 'tidyverse', ' R ',
-                    'Stata', 'STATA', 'regression', 'econometric', 'Qualtrics',
-                    'remote', 'work from home', 'work-from-home',
-                    'survey research', 'data science', 'data scientist', 'quantitative', 'economic',
-                    'Python', 'statistic', 'SQL',
-                    'analysis', 'data',
-                    'tutor', 'assistant'
-                ]
-    EXLCUSION_ROLE_KW=[
-        'president', 'director', 'senior', 'principal', 'professor', 'faculty', 'postdoc',
-        # Health/Medicine
-        'medicine',
-        'anesthesiolog', 'cancer', 'cardiolog', 'dermatolog','endocrinolog',
-        'gastroenterolog', 'geriatric', 'gynecolog', 'hematolog',
-        'nephrolog', 'neurolog', 'nursing',
-        'obstetric', 'oncolog', 'ophthalmolog', 'orthopedic', 'otolaryngolog',
-        'patholog', 'pediatric', 'physiolog', #'rehabilitat',
-        'psychiatr', 'pulmonolog', 'radiolog', 'rheumatolog', 'surgery', 'urolog',
-        # More Natural Sciences
-        'animal', 'biolog', 'biochem',
-        'chemist', 'physics', 'atronom'
-        ]
+    # Get keywords from profile YAML
+    yaml_path = BASE_DIR / ".." / ".." / "profiles" / "profile1.yaml"
+    print(f"Profiles available: {os.listdir(yaml_path.parent)}")
+    with open(yaml_path, "r") as f:
+        profile = yaml.safe_load(f)
+    EXCLUSION_ROLE_KW = profile['EXCLUSION_ROLE_KW']
+    SEARCH_KW = profile['SEARCH_KW_INDIVIDUAL']
     OUTPUT_FILE='./scrappy_RA/data_to_unify/umich_jobs.csv'
 
-    umich_jobs = search_umich(SEARCH_KW, EXLCUSION_ROLE_KW, OUTPUT_FILE)
+    umich_jobs = search_umich(SEARCH_KW, EXCLUSION_ROLE_KW, OUTPUT_FILE)
 
     # Save a backup copy as well
     umich_jobs.write_csv("umich_jobs.csv")

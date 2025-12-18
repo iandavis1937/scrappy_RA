@@ -1,44 +1,39 @@
 
 
+import os
+from pathlib import Path
+import yaml
 import polars as pl
+
 # Explicit relative import
 from . import higher_ed_scraper
 
+
+# Get the directory where THIS script is located
+BASE_DIR = Path(__file__).resolve().parent     # __file__ is a built-in variable, points to your .py file
+
+
 def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True):
     print('Running HigherEd scraper...')
+    remote_jobs = None
+    lab_jobs = None
     
-    EXLCUSION_ROLE_KW=[
-        'president', 'director', 'senior', 'principal', 'professor', 'faculty', 'postdoc',
-        # Health/Medicine
-        'medicine', 'medical', 'surgical',
-        'anesthesi', 'cancer', 'cardiolog', 'dermatolog','endocrinolog',
-        'gastroenterolog', 'geriatric', 'gynecolog', 'hematolog',
-        'nephrolog', 'neurolog', 'nursing', 'nurse',
-        'obstetric', 'oncolog', 'ophthalmolog', 'orthopedic', 'otolaryngolog',
-        'patholog', 'pediatric', 'pharmac', 'physiolog', #'rehabilitat',
-        'psychiatr', 'pulmonolog', 'radiolog', 'rheumatolog', 'surgery', 'urolog',
-        # More Natural Sciences
-        'animal', 'biolog', 'biochem', 'ecolog',
-        'chemist', 'physics', 'astronom'
-        ]
+    # Get keywords from profile YAML
+    yaml_path = BASE_DIR / ".." / ".." / "profiles" / "profile1.yaml"
+    print(f"Profiles available: {os.listdir(yaml_path.parent)}")
+    with open(yaml_path, "r") as f:
+        profile = yaml.safe_load(f)
+    EXCLUSION_ROLE_KW = profile['EXCLUSION_ROLE_KW']
+    SEARCH_KW = profile['SEARCH_KW_HIGHERED_REMOTE']
 
     # Get remote jobs
     if search_remote_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/search/remote.cfm'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_remote_jobs.csv'
-        
-        SEARCH_KW = {
-            1: ['" R language"', '" R programming"', '" R statistic"', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics', '"statistical software"', '"statistical program"'],
-            2: ['"data science"', '"data scientist"', '"survey research"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
-            3: ['analysis', 'data'],
-            4: ['tutor', 'assistant']
-        }
-        
-        SKILLS_KW=['R', 'RStudio', 'Stata', 'STATA', 'statistic', 'regression']
         FETCH_JOB_DESC_FLAG = False
         
         remote_jobs = higher_ed_scraper.search_higher_ed_category(
-            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXLCUSION_ROLE_KW
+            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW
             )
         remote_jobs = remote_jobs.with_columns(
             pl.lit('remote').alias('remote_or_lab'),
@@ -50,17 +45,11 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     if search_lab_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/admin/search.cfm?JobCat=150&CatName=Laboratory%20and%20Research'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_lab_jobs.csv'
-        SEARCH_KW = {
-            1: ['remote', 'work from home', 'work-from-home'],
-            2: ['" R language"', '" R programming"', '" R statistic"', 'RStudio', 'Stata', 'STATA', 'regression', 'econometrics', '"statistical software"', '"statistical program"'],
-            4: ['"data science"', '"data scientist"', '"survey"', 'economic', 'quantitative', 'Python', 'SQL', 'Qualtrics', 'statistic'],
-            6: ['analysis', 'data'],
-            8: ['tutor', 'assistant']
-        }
         FETCH_JOB_DESC_FLAG = False
+        SEARCH_KW = profile['SEARCH_KW_HIGHERED_LAB']
         
         lab_jobs = higher_ed_scraper.search_higher_ed_category(
-            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXLCUSION_ROLE_KW
+            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW
             )
         lab_jobs = lab_jobs.with_columns(
             pl.lit('lab').alias('remote_or_lab'),
@@ -74,10 +63,10 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     
         return jobs
     
-    elif not remote_jobs.empty():
+    elif remote_jobs is not None:
         return remote_jobs
         
-    elif not lab_jobs.empty():
+    elif lab_jobs is not None:
         return lab_jobs
     
     else:

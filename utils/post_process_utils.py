@@ -49,6 +49,32 @@ def batch_rename(df: pl.DataFrame, colnm_d: dict) -> pl.DataFrame:
     return df
 
 
+def parse_relative_date(date_str: str) -> datetime:
+    """Convert relative date strings to actual dates."""
+    date_str = date_str.strip().lower()
+    today = datetime.now()
+    
+    if date_str == "today":
+        return today
+    elif date_str == "yesterday":
+        return today - timedelta(days=1)
+    elif "day ago" in date_str or "days ago" in date_str:
+        days = int(date_str.split()[0])
+        return today - timedelta(days=days)
+    elif "week ago" in date_str or "weeks ago" in date_str:
+        weeks = int(date_str.split()[0])
+        return today - timedelta(weeks=weeks)
+    elif "month ago" in date_str or "months ago" in date_str:
+        months = int(date_str.split()[0])
+        return today - timedelta(days=months * 30)  # Approximation
+    else:
+        # Try parsing as actual date
+        try:
+            return datetime.strptime(date_str, "%m/%d/%Y")
+        except ValueError:
+            return today
+
+
 def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
     """Reads and combines CSV files into a single Polars DataFrame."""
     if not csv_files:
@@ -116,7 +142,9 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
         three_months_ago = datetime.now() - timedelta(days=90)
 
         df = df.with_columns(
-            pl.col("posted_date").str.to_date("%m/%d/%Y").alias("posted_date")
+            pl.col("posted_date")
+            .map_elements(parse_relative_date, return_dtype=pl.Datetime)
+            .alias("posted_date")
         ).filter(
             pl.col("posted_date") >= three_months_ago.date()
         ).with_columns(
@@ -304,116 +332,6 @@ def read_from_google_sheets(sheet_title: str, worksheet_name: str, creds_file: s
     except Exception as e:
         print(f"✗ Error reading worksheet: {e}")
         return pl.DataFrame()
-
-
-def write_gdoc_letter_A(
-    text: str,
-    doc_title: str,
-    creds_file: str,
-    folder_id: str="1fXbsMrE_MU4wchsll1X4bi9SuK6q5ikV"
-    ):
-    """
-    Creates a formatted cover letter in Google Docs with proper styling and saves it into a specific folder.
-    
-    Args:
-        text: The cover letter text.
-        doc_title: Title for the document.
-        creds_file: Path to the credentials file.
-        folder_id: Optional ID of the folder where to save the document. If None, will be saved to root.
-    
-    Returns:
-        Document URL.
-    """
-    try:
-        # Define the scopes for Docs and Drive APIs
-        scope = [
-            'https://www.googleapis.com/auth/documents',
-            'https://www.googleapis.com/auth/drive'
-        ]
-        
-        # Load credentials from service account
-        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_file, scope)
-        service = build('docs', 'v1', credentials=creds)
-        drive_service = build('drive', 'v3', credentials=creds)  # Drive service to move the file
-        
-        # Create the Google Docs document
-        print("Generating Google Doc...")
-        doc = service.documents().create(body={'title': doc_title}).execute()
-        doc_id = doc.get('documentId')
-        
-        # Split the input text into paragraphs
-        paragraphs = text.split('\n\n')
-        
-        requests = []
-        current_index = 1
-        
-        # Prepare the requests to insert text and format it
-        for para in paragraphs:
-            if para.strip():
-                requests.append({
-                    'insertText': {
-                        'location': {'index': current_index},
-                        'text': para.strip() + '\n\n'
-                    }
-                })
-                current_index += len(para.strip()) + 2
-        
-        # Optional formatting for the document
-        requests.extend([
-            {
-                'updateParagraphStyle': {
-                    'range': {
-                        'startIndex': 1,
-                        'endIndex': current_index
-                    },
-                    'paragraphStyle': {
-                        'lineSpacing': 115,
-                        'spaceAbove': {'magnitude': 0, 'unit': 'PT'},
-                        'spaceBelow': {'magnitude': 10, 'unit': 'PT'}
-                    },
-                    'fields': 'lineSpacing,spaceAbove,spaceBelow'
-                }
-            },
-            {
-                'updateTextStyle': {
-                    'range': {
-                        'startIndex': 1,
-                        'endIndex': current_index
-                    },
-                    'textStyle': {
-                        'fontSize': {'magnitude': 11, 'unit': 'PT'},
-                        'weightedFontFamily': {'fontFamily': 'Arial'}
-                    },
-                    'fields': 'fontSize,weightedFontFamily'
-                }
-            }
-        ])
-        
-        # Apply the requests (insert text + formatting)
-        service.documents().batchUpdate(
-            documentId=doc_id,
-            body={'requests': requests}
-        ).execute()
-
-        # If a folder_id is provided, move the document into that folder
-        print("Moving doc to specified folder...")
-        if folder_id:
-            drive_service.files().update(
-                fileId=doc_id,
-                addParents=folder_id,  # Add folder as a parent
-                removeParents='root',  # Remove from the root folder
-                fields='id, parents'
-            ).execute()
-
-        # Construct the URL to the newly created document
-        doc_url = f'https://docs.google.com/document/d/{doc_id}/edit'
-        print(f"✓ Formatted document created and saved: {doc_url}")
-        
-        return doc_url
-        
-    except HttpError as e:
-        print(f"✗ Error creating or saving the document: {e}")
-        return None
 
 
 def get_user_credentials():

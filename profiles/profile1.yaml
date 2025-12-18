@@ -1,0 +1,159 @@
+# Exclusion Keywords Configuration (Shared across all scrapers)
+EXCLUSION_ROLE_KW:
+  # Seniority
+  - president
+  - director
+  - senior
+  - principal
+  - professor
+  - faculty
+  - postdoc
+
+  # Health/Medicine
+  - medicine
+  - medical
+  - surgical
+  - anesthesi
+  - cancer
+  - cardiolog
+  - dermatolog
+  - endocrinolog
+  - gastroenterolog
+  - geriatric
+  - gynecolog
+  - hematolog
+  - nephrolog
+  - neurolog
+  - nursing
+  - nurse
+  - obstetric
+  - oncolog
+  - ophthalmolog
+  - orthopedic
+  - otolaryngolog
+  - patholog
+  - pediatric
+  - pharmac
+  - physiolog
+  - psychiatr
+  - pulmonolog
+  - radiolog
+  - rheumatolog
+  - surgery
+  - urolog
+  - therapy
+  - therapist
+  - therapeutic
+
+  # More Natural Sciences
+  - animal
+  - biolog
+  - biochem
+  - ecolog
+  - chemist
+  - physics
+  - astronom
+
+# Search Keywords Configuration
+SEARCH_KW_HIGHERED_REMOTE:
+  1:
+    - '" R language"'
+    - '" R programming"'
+    - '" R statistic"'
+    - RStudio
+    - Stata
+    - STATA
+    - regression
+    - econometrics
+    - '"statistical software"'
+    - '"statistical program"'
+  2:
+    - '"data science"'
+    - '"data scientist"'
+    - '"survey research"'
+    - economic
+    - quantitative
+    - Python
+    - SQL
+    - Qualtrics
+    - statistic
+  3:
+    - analysis
+    - data
+  4:
+    - tutor
+    - assistant
+
+
+SEARCH_KW_HIGHERED_LAB:
+  1:
+    - 'remote'
+    - '"from home"'
+    - '"from-home"'
+    - 'telecommute'
+    - 'telecommuting'
+  2:
+    - '" R language"'
+    - '" R programming"'
+    - '" R statistic"'
+    - RStudio
+    - Stata
+    - STATA
+    - regression
+    - econometrics
+    - '"statistical software"'
+    - '"statistical program"'
+  3:
+    - '"data science"'
+    - '"data scientist"'
+    - '"survey research"'
+    - economic
+    - quantitative
+    - Python
+    - SQL
+    - Qualtrics
+    - statistic
+  4:
+    - analysis
+    - data
+  5:
+    - tutor
+    - assistant
+
+
+SEARCH_KW_INDIVIDUAL:
+  # Relevant Skills I
+  - 'RStudio'
+  - 'R programming'
+  - 'R language'
+  - 'R statistic'
+  - 'R software'
+  - 'tidyverse'
+  - 'Stata'
+  - 'STATA'
+  - 'regression'
+  - 'econometric'
+  - 'Qualtrics'
+
+  # Remote
+  - 'remote'
+  - 'from home'
+  - 'from-home'
+  - 'telecommute'
+  - 'telecommuting'
+
+  # Relevant Skills II
+  - 'survey research'
+  - 'data science'
+  - 'data scientist'
+  - 'quantitative'
+  - 'economic'
+  - 'Python'
+  - 'statistic'
+  - 'SQL'
+
+  # Highly General
+  - 'analysis'
+  - 'data'
+  - 'tutor'
+  - 'assistant'

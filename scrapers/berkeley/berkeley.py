@@ -1,45 +1,33 @@
 
 
+import os
+from pathlib import Path
+import yaml
 import polars as pl
-# Explicit relative import
+
 from . import berkeley_scraper
+
+BASE_DIR = Path(__file__).resolve().parent     # __file__ is a built-in variable, points to your .py file
+
 
 def run_berkeley_module(search_jobs_page=True):
     print('Running UC Berkeley scraper...')
-    
-    EXLCUSION_ROLE_KW=[
-        'president', 'director', 'senior', 'principal', 'professor', 'faculty', 'postdoc',
-        # Health/Medicine
-        'medicine',
-        'anesthesiolog', 'cancer', 'cardiolog', 'dermatolog','endocrinolog',
-        'gastroenterolog', 'geriatric', 'gynecolog', 'hematolog',
-        'nephrolog', 'neurolog', 'nursing',
-        'obstetric', 'oncolog', 'ophthalmolog', 'orthopedic', 'otolaryngolog',
-        'patholog', 'pediatric', 'physiolog', #'rehabilitat',
-        'psychiatr', 'pulmonolog', 'radiolog', 'rheumatolog', 'surgery', 'urolog',
-        # More Natural Sciences
-        'animal', 'biolog', 'biochem',
-        'chemist', 'physics', 'atronom'
-        ]
 
     # Get listings (mostly in-person)
     if search_jobs_page:
         BASE_URL = 'https://careerspub.universityofcalifornia.edu/psc/ucb/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/berkeley/berkeley_lab_jobs.csv'
-        SEARCH_KW = [
-                'RStudio', 'tidyverse', ' R language', ' R programming', ' R statistic',
-                'Stata', 'STATA', 'regression', 'econometric', 'Qualtrics',
-                # 'remote',  seems to be related to bug, may just be its order in the sequence 
-                'work from home', 'work-from-home',
-                'survey research', 'data science', 'data scientist', 'quantitative', 'economic',
-                'Python', 'statistic', 'SQL',
-                'analysis', 'data',
-                'tutor', 'assistant'
-            ]
-        FETCH_JOB_DESC_FLAG = False
+        
+        # Get keywords from profile YAML
+        yaml_path = BASE_DIR / ".." / ".." / "profiles" / "profile1.yaml"
+        print(f"Profiles available: {os.listdir(yaml_path.parent)}")
+        with open(yaml_path, "r") as f:
+            profile = yaml.safe_load(f)
+        EXCLUSION_ROLE_KW = profile['EXCLUSION_ROLE_KW']
+        SEARCH_KW = profile['SEARCH_KW_INDIVIDUAL']
         
         jobs = berkeley_scraper.search_berkeley(
-            SEARCH_KW, OUTPUT_FILE, EXLCUSION_ROLE_KW
+            SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW
             )
      
     jobs.write_csv('./scrappy_RA/data_to_unify/berkeley_jobs.csv')
