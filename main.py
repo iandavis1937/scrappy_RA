@@ -10,13 +10,13 @@ from .scrapers.berkeley.berkeley import run_berkeley_module
 
 # --- CONFIGURATION ---
 FOLDER_PATH = './scrappy_RA/data_to_unify'
-CREDENTIALS_FILE = './scrappy_RA/creds/job-scraper-479904-fcff09f61f6f.json' # Rename this to your file
+CREDENTIALS_FILE = './scrappy_RA/creds/job-scraper-479904-fcff09f61f6f.json'
 SHEET_TITLE = 'Job Scraper'
 WORKSHEET_NAME = 'Universities (RA, Admin., TA, etc.)'
 
-FETCH_HIGHER_ED_FLAG = False
-FETCH_UMICH_FLAG = False
-FETCH_BERKELEY_FLAG = False
+FETCH_HIGHER_ED_FLAG = True
+FETCH_UMICH_FLAG = True
+FETCH_BERKELEY_FLAG = True
 
 
 if __name__ == '__main__':
@@ -29,6 +29,8 @@ if __name__ == '__main__':
     if FETCH_BERKELEY_FLAG:
         run_berkeley_module()
         
+    exit
+    
     # Check if the input folder exists and find files
     if not os.path.exists(FOLDER_PATH):
         print(f"Creating input folder: '{FOLDER_PATH}'. Please place your CSV files here.")

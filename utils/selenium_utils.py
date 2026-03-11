@@ -12,6 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium_stealth import stealth
 
 
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ import polars as pl
 
 from . import gen_utils
 
-
+'''
 def setup_driver():
     """Setup and return a configured Selenium WebDriver"""
     print("Setting up Selenium WebDriver...")
@@ -39,6 +40,46 @@ def setup_driver():
     
     # Remove webdriver property
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    
+    return driver
+'''
+
+def setup_driver():
+    """Setup and return a configured Selenium WebDriver"""
+    print("Setting up Selenium WebDriver...")
+    chrome_options = Options()
+    
+    # Your good Chrome options
+    chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--start-maximized')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--disable-extensions')
+    
+    prefs = {
+        "profile.default_content_setting_values.notifications": 2,
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+        "intl.accept_languages": "en-US,en"
+    }
+    chrome_options.add_experimental_option("prefs", prefs)
+    
+    driver = webdriver.Chrome(options=chrome_options)
+    
+    # Let selenium-stealth handle the heavy lifting
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
     
     return driver
 

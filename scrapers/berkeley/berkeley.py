@@ -24,7 +24,7 @@ def run_berkeley_module(search_jobs_page=True):
         with open(yaml_path, "r") as f:
             profile = yaml.safe_load(f)
         EXCLUSION_ROLE_KW = profile['EXCLUSION_ROLE_KW']
-        SEARCH_KW = profile['SEARCH_KW_INDIVIDUAL']
+        SEARCH_KW = profile['SEARCH_KW_INDIVIDUAL_NODASH']
         
         jobs = berkeley_scraper.search_berkeley(
             SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW

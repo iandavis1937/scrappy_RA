@@ -87,12 +87,6 @@ SEARCH_KW_HIGHERED_REMOTE:
 
 SEARCH_KW_HIGHERED_LAB:
   1:
-    - 'remote'
-    - '"from home"'
-    - '"from-home"'
-    - 'telecommute'
-    - 'telecommuting'
-  2:
     - '" R language"'
     - '" R programming"'
     - '" R statistic"'
@@ -103,7 +97,7 @@ SEARCH_KW_HIGHERED_LAB:
     - econometrics
     - '"statistical software"'
     - '"statistical program"'
-  3:
+  2:
     - '"data science"'
     - '"data scientist"'
     - '"survey research"'
@@ -113,6 +107,12 @@ SEARCH_KW_HIGHERED_LAB:
     - SQL
     - Qualtrics
     - statistic
+  3:
+    - 'remote'
+    - '"from home"'
+    - '"from-home"'
+    - 'telecommute'
+    - 'telecommuting'
   4:
     - analysis
     - data
@@ -135,12 +135,43 @@ SEARCH_KW_INDIVIDUAL:
   - 'econometric'
   - 'Qualtrics'
 
+  # Relevant Skills II
+  - 'survey research'
+  - 'data science'
+  - 'data scientist'
+  - 'quantitative'
+  - 'economic'
+  - 'Python'
+  - 'statistic'
+  - 'SQL'
+
   # Remote
   - 'remote'
   - 'from home'
   - 'from-home'
   - 'telecommute'
   - 'telecommuting'
+
+  # Highly General
+  - 'analysis'
+  - 'data'
+  - 'tutor'
+  - 'assistant'
+
+
+SEARCH_KW_INDIVIDUAL_NODASH:
+  # Relevant Skills I
+  - 'RStudio'
+  - 'R programming'
+  - 'R language'
+  - 'R statistic'
+  - 'R software'
+  - 'tidyverse'
+  - 'Stata'
+  - 'STATA'
+  - 'regression'
+  - 'econometric'
+  - 'Qualtrics'
 
   # Relevant Skills II
   - 'survey research'
@@ -151,6 +182,12 @@ SEARCH_KW_INDIVIDUAL:
   - 'Python'
   - 'statistic'
   - 'SQL'
+
+  # Remote
+  - 'remote'
+  - 'from home'
+  - 'telecommute'
+  - 'telecommuting'
 
   # Highly General
   - 'analysis'
