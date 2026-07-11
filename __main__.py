@@ -2,10 +2,10 @@
 
 print("Importing modules...")
 import os
-from .utils import post_process_utils
-from .scrapers.higher_ed.higher_ed import run_higher_ed_module
-from .scrapers.umich.umich import run_umich_module
-from .scrapers.berkeley.berkeley import run_berkeley_module
+from scrappy_RA.utils import post_process_utils
+from scrappy_RA.scrapers.higher_ed.higher_ed import run_higher_ed_module
+from scrappy_RA.scrapers.umich.umich import run_umich_module
+from scrappy_RA.scrapers.berkeley.berkeley import run_berkeley_module
 
 
 # --- CONFIGURATION ---
