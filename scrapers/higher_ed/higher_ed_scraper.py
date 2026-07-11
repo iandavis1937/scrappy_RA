@@ -199,7 +199,8 @@ class HigherEdScraper(Scraper):
         return jobs_on_page
         
         
-def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_kw):
+def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_kw,
+                              fetch_desc=False, ai_enrich=False):
     all_jobs_df_list = []
     driver = selenium_utils.setup_driver()
 
@@ -250,7 +251,13 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
         jobs = jobs.filter(~pl.col('title').str.to_lowercase().str.contains(keyword.lower())) 
     
     print(f"Total jobs after filtering: {len(jobs)}")
-    
+
+    # Fetch job descriptions (+ education requirements) for the filtered set.
+    # Cached by job_code, so re-runs only fetch new postings.
+    if fetch_desc:
+        from scrappy_RA.scrapers.higher_ed.fetch_descriptions import fetch_job_descriptions
+        jobs = fetch_job_descriptions(jobs, ai_enrich=ai_enrich)
+
     # Save to CSV
     try:
         jobs = jobs.sort('kw_idx')  # Sort by kw_idx (ascending by default)

@@ -13,7 +13,8 @@ from . import higher_ed_scraper
 BASE_DIR = Path(__file__).resolve().parent     # __file__ is a built-in variable, points to your .py file
 
 
-def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True):
+def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True,
+                         fetch_desc=True, ai_enrich=False):
     print('Running HigherEd scraper...')
     remote_jobs = None
     lab_jobs = None
@@ -30,10 +31,10 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     if search_remote_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/search/remote.cfm'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_remote_jobs.csv'
-        FETCH_JOB_DESC_FLAG = False
-        
+
         remote_jobs = higher_ed_scraper.search_higher_ed_category(
-            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW
+            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW,
+            fetch_desc=fetch_desc, ai_enrich=ai_enrich
             )
         remote_jobs = remote_jobs.with_columns(
             pl.lit('remote').alias('remote_or_lab'),
@@ -45,11 +46,11 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
     if search_lab_jobs_page:
         BASE_URL = 'https://www.higheredjobs.com/admin/search.cfm?JobCat=150&CatName=Laboratory%20and%20Research'
         OUTPUT_FILE='./scrappy_RA/data_saved_locally/higher_ed/higher_ed_lab_jobs.csv'
-        FETCH_JOB_DESC_FLAG = False
         SEARCH_KW = profile['SEARCH_KW_HIGHERED_LAB']
-        
+
         lab_jobs = higher_ed_scraper.search_higher_ed_category(
-            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW
+            BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW,
+            fetch_desc=fetch_desc, ai_enrich=ai_enrich
             )
         lab_jobs = lab_jobs.with_columns(
             pl.lit('lab').alias('remote_or_lab'),
