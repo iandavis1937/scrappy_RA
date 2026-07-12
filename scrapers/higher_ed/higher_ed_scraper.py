@@ -200,7 +200,7 @@ class HigherEdScraper(Scraper):
         
         
 def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_kw,
-                              fetch_desc=False, ai_enrich=False):
+                              fetch_desc=False, ai_enrich=False, desc_limit=None):
     all_jobs_df_list = []
     driver = selenium_utils.setup_driver()
 
@@ -252,15 +252,25 @@ def search_higher_ed_category(base_url, search_kw, output_file, exclusion_role_k
     
     print(f"Total jobs after filtering: {len(jobs)}")
 
+    # Rank jobs by keyword relevance, mirroring the final sort in __main__.py
+    # (see post_process_utils.combine_csvs_to_polars): primary keyword-group
+    # index ascending, then match count descending. kw_num is a job's keyword-
+    # match count (how many search keyword-groups returned it). Sorting here -
+    # before fetching - means `desc_limit` fetches descriptions for the top-N
+    # most relevant listings rather than an arbitrary N.
+    jobs = jobs.with_columns(
+        pl.col('kw_idx').str.count_matches(',').add(1).alias('kw_num'),
+        pl.col('kw_idx').str.split(', ').list.first().cast(pl.Int64).alias('kw_idx1'),
+    ).sort(['kw_idx1', 'kw_num'], descending=[False, True], nulls_last=True)
+
     # Fetch job descriptions (+ education requirements) for the filtered set.
     # Cached by job_code, so re-runs only fetch new postings.
     if fetch_desc:
         from scrappy_RA.scrapers.higher_ed.fetch_descriptions import fetch_job_descriptions
-        jobs = fetch_job_descriptions(jobs, ai_enrich=ai_enrich)
+        jobs = fetch_job_descriptions(jobs, ai_enrich=ai_enrich, desc_limit=desc_limit)
 
-    # Save to CSV
+    # Save to CSV (already sorted in the ranking order above).
     try:
-        jobs = jobs.sort('kw_idx')  # Sort by kw_idx (ascending by default)
         jobs.write_csv(output_file)
         print(f"✓ Successfully saved {len(jobs)} job listings!")
     except Exception as e:

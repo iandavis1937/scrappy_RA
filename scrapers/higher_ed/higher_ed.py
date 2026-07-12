@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent     # __file__ is a built-in variable
 
 
 def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True,
-                         fetch_desc=True, ai_enrich=False):
+                         fetch_desc=True, ai_enrich=False, desc_limit=None):
     print('Running HigherEd scraper...')
     remote_jobs = None
     lab_jobs = None
@@ -34,7 +34,7 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
 
         remote_jobs = higher_ed_scraper.search_higher_ed_category(
             BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW,
-            fetch_desc=fetch_desc, ai_enrich=ai_enrich
+            fetch_desc=fetch_desc, ai_enrich=ai_enrich, desc_limit=desc_limit
             )
         remote_jobs = remote_jobs.with_columns(
             pl.lit('remote').alias('remote_or_lab'),
@@ -50,7 +50,7 @@ def run_higher_ed_module(search_remote_jobs_page=True, search_lab_jobs_page=True
 
         lab_jobs = higher_ed_scraper.search_higher_ed_category(
             BASE_URL, SEARCH_KW, OUTPUT_FILE, EXCLUSION_ROLE_KW,
-            fetch_desc=fetch_desc, ai_enrich=ai_enrich
+            fetch_desc=fetch_desc, ai_enrich=ai_enrich, desc_limit=desc_limit
             )
         lab_jobs = lab_jobs.with_columns(
             pl.lit('lab').alias('remote_or_lab'),

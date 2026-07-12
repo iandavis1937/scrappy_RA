@@ -83,6 +83,9 @@ class Scraper:
             print(f"Fetching page {page + 1}", end=" ")
             
             soup = self.get_soup(url)
+            if soup is None:
+                print("Failed to fetch page. Stopping.")
+                break
 
             jobs_on_page = self.parse_page(soup)
             if not jobs_on_page:

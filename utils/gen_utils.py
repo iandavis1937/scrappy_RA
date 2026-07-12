@@ -18,10 +18,9 @@ def get_soup_requests(url, headers=None):
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"Request failed: {e}")
+        return None
 
-    soup = BeautifulSoup(response.content, "html.parser")
-    
-    return soup
+    return BeautifulSoup(response.content, "html.parser")
 
 
 def scrape_requests(

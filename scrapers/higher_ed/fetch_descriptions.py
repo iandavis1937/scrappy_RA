@@ -256,12 +256,19 @@ def fetch_job_descriptions(
     driver=None,
     ai_enrich: bool = False,
     ai_model: str = "claude-haiku-4-5",
+    desc_limit: Optional[int] = None,
 ) -> pl.DataFrame:
     """
     Add `description`, `summary`, and `education_requirements` columns to `df`
     (keyed on `job_code`), fetching only postings not already cached. When
     `ai_enrich` is True, also add `ai_summary`, `ai_education_requirements`, and
     `ai_degree_level` via a single Anthropic batch over the newly-seen postings.
+
+    `desc_limit`, if set, caps how many *new* (not-yet-cached) postings are
+    fetched this run - handy for a quick test or to spread fetching across runs
+    (each run picks up where the last left off, since cached rows are skipped).
+    All rows still get the description columns via the join; postings past the
+    cap simply come back null until a later run fetches them.
 
     `df` must have `job_code` and `url` columns. If `driver` is None, one is
     created via selenium_utils.setup_driver() and closed when done.
@@ -283,9 +290,15 @@ def fetch_job_descriptions(
         & (pl.col("url").is_not_null())
         & (pl.col("url") != "")
         & (~pl.col("job_code").is_in(list(cached_codes)))
-    ).unique(subset=["job_code"], keep="first")
+    ).unique(subset=["job_code"], keep="first", maintain_order=True)
 
-    print(f"\nFetching descriptions: {to_fetch.height} new / "
+    n_uncached = to_fetch.height
+    if desc_limit is not None and to_fetch.height > desc_limit:
+        to_fetch = to_fetch.head(desc_limit)
+
+    capped = f", capped at {desc_limit}" if desc_limit is not None else ""
+    print(f"\nFetching descriptions: {to_fetch.height} this run "
+          f"({n_uncached} uncached{capped}) / "
           f"{df.height} total ({len(cached_codes)} already cached).")
 
     new_rows: List[Dict] = []
