@@ -96,7 +96,8 @@ def combine_csvs_to_polars(csv_files: List[Path]) -> pl.DataFrame:
             'posted_date',
             'kw', 'kw_idx',
             'url', 'salary', 'category',
-            'employment_type', 'job_id', 'remote_or_lab'
+            'employment_type', 'job_id', 'remote_or_lab',
+            'description', 'summary', 'education_requirements'
             ]
         
         df_list = []

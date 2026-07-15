@@ -16,9 +16,9 @@ CREDENTIALS_FILE = './scrappy_RA/creds/job-scraper-479904-fcff09f61f6f.json'
 SHEET_TITLE = 'Job Scraper'
 WORKSHEET_NAME = 'Universities (RA, Admin., TA, etc.)'
 
-FETCH_HIGHER_ED_FLAG = False
-FETCH_UMICH_FLAG = True
-FETCH_BERKELEY_FLAG = True
+FETCH_HIGHER_ED_FLAG = True
+FETCH_UMICH_FLAG = False
+FETCH_BERKELEY_FLAG = False
 
 
 def has_results(result) -> bool:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
             search_remote_jobs_page=True,
             search_lab_jobs_page=True,
             fetch_desc=True,
-            desc_limit=10,  # will continue to fetch uncached descriptions on subsequent runs
+            desc_limit=100,  # will continue to fetch uncached descriptions on subsequent runs
             ai_enrich=False
             )
 
